@@ -1,7 +1,7 @@
 # insert-add-profiling
 
-Instruments C programs to count the number of add instructions in each function. Adapted
-from [llvm-pass-skeleton][skeleton].
+Instruments C programs to count the number of dynamic add instructions run in each
+function. Adapted from [llvm-pass-skeleton][skeleton].
 
 Build:
 
