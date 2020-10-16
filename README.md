@@ -1,7 +1,7 @@
-# llvm-pass-skeleton
+# insert-add-profiling
 
-A completely useless LLVM pass.
-It's for LLVM 3.8.
+Instruments C programs to count the number of add instructions in each function. Adapted
+from [llvm-pass-skeleton][skeleton].
 
 Build:
 
@@ -15,3 +15,5 @@ Build:
 Run:
 
     $ clang -Xclang -load -Xclang build/skeleton/libSkeletonPass.* something.c
+
+[skeleton]: https://github.com/sampsyo/llvm-pass-skeleton
