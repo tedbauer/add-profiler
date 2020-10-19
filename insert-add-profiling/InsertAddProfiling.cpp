@@ -16,30 +16,46 @@ namespace {
     InsertAddProfilingPass() : FunctionPass(ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      errs() << "Hello!\n";
       LLVMContext& Ctx = F.getContext();
-      FunctionCallee logFunc = F.getParent()->getOrInsertFunction(
-        "logop", Type::getVoidTy(Ctx), Type::getInt32Ty(Ctx)
+
+      FunctionCallee logNumberFunc = F.getParent()->getOrInsertFunction(
+        "log_result", Type::getVoidTy(Ctx), Type::getVoidTy(Ctx)
       );
 
-      errs() << F << "\n";
+      auto &firstBlock = F.front();
+      auto &firstInstr = firstBlock.front();
+
+      IRBuilder<> builder(&firstInstr);
+      auto allocInst = builder.CreateAlloca(Type::getInt32Ty(Ctx), 0, "");
+      
+      FunctionCallee logResultFunc = F.getParent()->getOrInsertFunction(
+        "log_result", Type::getVoidTy(Ctx), Type::getInt32Ty(Ctx)
+      );
+
+      Value* incremented;
+
       for (auto &B : F) {
-	errs() << B << "\n";
         for (auto &I : B) {
-	  errs() << I << "\n";
-          if (auto *op = dyn_cast<BinaryOperator>(&I)) {
-            IRBuilder<> builder(op);
-            builder.SetInsertPoint(&B, ++builder.GetInsertPoint());
-
-	    Value* args[] = {op};
-	    builder.CreateCall(logFunc, args);
-
-	    return true;
+          if (isa<BinaryOperator>(I) && I.getOpcode() == Instruction::Mul) {
+            auto *op = dyn_cast<BinaryOperator>(&I);
+            IRBuilder<> builder2(op);
+	    builder2.SetInsertPoint(&B, ++builder2.GetInsertPoint());
+	    LoadInst *loadInst = builder2.CreateLoad(Type::getInt32Ty(Ctx), allocInst);
+	    incremented = builder2.CreateAdd(builder2.getInt32(1), loadInst);
+	    StoreInst *storeInst = builder2.CreateStore(incremented, allocInst);
           }
 	}
       }
 
-      return false;
+      auto &lastBlock = F.back();
+      auto &lastInstr = lastBlock.back();
+
+      Value *funcName = builder.CreateGlobalStringPtr(F.getName());
+      std::vector<Value*> args({funcName, incremented});
+      IRBuilder<> builder3(&lastInstr);
+      builder3.CreateCall(logResultFunc, args);
+
+      return true;
     }
 
   };
